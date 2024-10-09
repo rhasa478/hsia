@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Protocol Data</title>
+    <style>
+        /* Styles for the page */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 900px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        form input, form textarea, form button {
+            width: 48%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        form textarea {
+            resize: none;
+        }
+
+        form button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        table button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        table button:hover {
+            background-color: darkred;
+        }
+
+        @media (max-width: 768px) {
+            form input, form textarea {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Protocol Data Entry</h1>
+        <form id="protocolForm">
+            <input type="hidden" id="rowIndex">
+            <input type="number" id="sl" name="sl" placeholder="SL" required>
+            <input type="text" id="name" name="name" placeholder="Name" required>
+            <input type="text" id="flightNo" name="flightNo" placeholder="Flight No" required>
+            <input type="datetime-local" id="datetime" name="datetime" required>
+            <textarea id="bidaLetter" name="bidaLetter" rows="3" placeholder="BIDA Letter"></textarea>
+            <input type="text" id="protocolOfficer" name="protocolOfficer" placeholder="Protocol Officer" required>
+            <textarea id="remarks" name="remarks" rows="3" placeholder="Remarks"></textarea>
+            <button type="submit">Save</button>
+        </form>
+
+        <h2>Saved Protocol Data</h2>
+        <table id="protocolTable">
+            <thead>
+                <tr>
+                    <th>SL</th>
+                    <th>Name</th>
+                    <th>Flight No</th>
+                    <th>Date & Time</th>
+                    <th>BIDA Letter</th>
+                    <th>Protocol Officer</th>
+                    <th>Remarks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const protocolForm = document.getElementById('protocolForm');
+        const protocolTableBody = document.querySelector('#protocolTable tbody');
+        let protocolData = JSON.parse(localStorage.getItem('protocolData')) || [];
+
+        // Load existing data from localStorage
+        function loadTableData() {
+            protocolTableBody.innerHTML = ''; // Clear the table body
+            protocolData.forEach((data, index) => {
+                const row = `
+                    <tr>
+                        <td>${data.sl}</td>
+                        <td>${data.name}</td>
+                        <td>${data.flightNo}</td>
+                        <td>${data.datetime}</td>
+                        <td>${data.bidaLetter}</td>
+                        <td>${data.protocolOfficer}</td>
+                        <td>${data.remarks}</td>
+                        <td><button onclick="deleteRow(${index})">Delete</button></td>
+                    </tr>
+                `;
+                protocolTableBody.innerHTML += row;
+            });
+        }
+
+        // Function to delete a row
+        function deleteRow(index) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                protocolData.splice(index, 1);  // Remove the data from the array
+                localStorage.setItem('protocolData', JSON.stringify(protocolData));  // Update localStorage
+                loadTableData();  // Reload the table data
+            }
+        }
+
+        protocolForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const sl = document.getElementById('sl').value;
+            const name = document.getElementById('name').value;
+            const flightNo = document.getElementById('flightNo').value;
+            const datetime = document.getElementById('datetime').value;
+            const bidaLetter = document.getElementById('bidaLetter').value;
+            const protocolOfficer = document.getElementById('protocolOfficer').value;
+            const remarks = document.getElementById('remarks').value;
+
+            const newData = {
+                sl, name, flightNo, datetime, bidaLetter, protocolOfficer, remarks
+            };
+
+            protocolData.push(newData);
+            localStorage.setItem('protocolData', JSON.stringify(protocolData));  // Save to localStorage
+
+            loadTableData();  // Reload the table data
+            protocolForm.reset();  // Clear the form
+        });
+
+        // Load data initially when the page loads
+        window.onload = loadTableData;
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Edit Protocol Data</title>
+    <style>
+        /* Same styles as before */
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+        }
+
+        ody {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 900px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+form input, form textarea, form button {
+    width: 48%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+form textarea {
+    resize: none;
+}
+
+form button {
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #0056b3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: #007BFF;
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tr:hover {
+    background-color: #f1f1f1;
+}
+
+@media (max-width: 768px) {
+    form input, form textarea {
+        width: 100%;
+    }
+}
+    </style>
+    <!-- jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF autoTable plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Edit Protocol Data</h1>
+        <form id="adminForm">
+            <input type="hidden" id="rowIndex">
+            <input type="number" id="sl" name="sl" placeholder="SL" required>
+            <input type="text" id="name" name="name" placeholder="Name" required>
+            <input type="text" id="flightNo" name="flightNo" placeholder="Flight No" required>
+            <input type="datetime-local" id="datetime" name="datetime" required>
+            <textarea id="bidaLetter" name="bidaLetter" rows="3" placeholder="BIDA Letter"></textarea>
+            <input type="text" id="protocolOfficer" name="protocolOfficer" placeholder="Protocol Officer" required>
+            <textarea id="remarks" name="remarks" rows="3" placeholder="Remarks"></textarea>
+            <input type="number" id="billingAmount" name="billingAmount" placeholder="Billing Amount" required>
+            <button type="submit">Save Changes</button>
+        </form>
+
+        <h2>Edit Protocol Data</h2>
+        <button onclick="generatePDF()">Generate PDF</button>
+        <table id="protocolTable">
+            <thead>
+                <tr>
+                    <th>SL</th>
+                    <th>Name</th>
+                    <th>Flight No</th>
+                    <th>Date & Time</th>
+                    <th>BIDA Letter</th>
+                    <th>Protocol Officer</th>
+                    <th>Remarks</th>
+                    <th>Billing Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let protocolData = JSON.parse(localStorage.getItem('protocolData')) || [];
+        const protocolTableBody = document.querySelector('#protocolTable tbody');
+        const adminForm = document.getElementById('adminForm');
+        let currentEditIndex = -1;
+
+        // Load table data from localStorage
+        function loadTableData() {
+            protocolTableBody.innerHTML = '';  // Clear the table body
+            protocolData.forEach((data, index) => {
+                const row = `
+                    <tr>
+                        <td>${data.sl}</td>
+                        <td>${data.name}</td>
+                        <td>${data.flightNo}</td>
+                        <td>${data.datetime}</td>
+                        <td>${data.bidaLetter}</td>
+                        <td>${data.protocolOfficer}</td>
+                        <td>${data.remarks}</td>
+                        <td>${data.billingAmount}</td>
+                        <td><button onclick="editRow(${index})">Edit</button></td>
+                    </tr>
+                `;
+                protocolTableBody.innerHTML += row;
+            });
+        }
+
+        // Edit row functionality
+        function editRow(index) {
+            const data = protocolData[index];
+
+            // Fill form with data to edit
+            document.getElementById('sl').value = data.sl;
+            document.getElementById('name').value = data.name;
+            document.getElementById('flightNo').value = data.flightNo;
+            document.getElementById('datetime').value = data.datetime;
+            document.getElementById('bidaLetter').value = data.bidaLetter;
+            document.getElementById('protocolOfficer').value = data.protocolOfficer;
+            document.getElementById('remarks').value = data.remarks;
+            document.getElementById('billingAmount').value = data.billingAmount;
+
+            currentEditIndex = index;  // Set current edit index
+        }
+
+        // Save changes
+        adminForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            if (currentEditIndex > -1) {
+                // Get updated values
+                protocolData[currentEditIndex] = {
+                    sl: document.getElementById('sl').value,
+                    name: document.getElementById('name').value,
+                    flightNo: document.getElementById('flightNo').value,
+                    datetime: document.getElementById('datetime').value,
+                    bidaLetter: document.getElementById('bidaLetter').value,
+                    protocolOfficer: document.getElementById('protocolOfficer').value,
+                    remarks: document.getElementById('remarks').value,
+                    billingAmount: document.getElementById('billingAmount').value
+                };
+
+                // Update localStorage
+                localStorage.setItem('protocolData', JSON.stringify(protocolData));
+                loadTableData();  // Reload table
+                adminForm.reset();  // Reset the form
+                currentEditIndex = -1;  // Reset edit index
+            }
+        });
+
+        // Generate PDF
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.autoTable({
+                head: [['SL', 'Name', 'Flight No', 'Date & Time', 'BIDA Letter', 'Protocol Officer', 'Remarks', 'Billing Amount']],
+                body: protocolData.map(data => [
+                    data.sl, 
+                    data.name, 
+                    data.flightNo, 
+                    data.datetime, 
+                    data.bidaLetter, 
+                    data.protocolOfficer, 
+                    data.remarks, 
+                    data.billingAmount
+                ])
+            });
+
+            doc.save('protocol_data.pdf');
+        }
+
+        // Load data when the page loads
+        window.onload = loadTableData;
+    </script>
+</body>
+</html>
